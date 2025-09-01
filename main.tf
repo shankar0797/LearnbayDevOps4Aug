@@ -1,1 +1,0 @@
-//this is terraform code for Learnbay
