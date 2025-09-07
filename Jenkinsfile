@@ -4,10 +4,11 @@ pipeline {
     environment {
         NODE_VERSION = '18'
         APP_NAME = 'jenkins-pipeline-test'
-        PORT = '3000'
+        PORT = '3001'
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 echo 'Checking out code from GitHub...'
@@ -66,7 +67,9 @@ pipeline {
             steps {
                 echo 'Deploying to staging environment...'
                 sh '''
+                    # Kill any existing node processes
                     pkill -f node || true
+
                     echo "Starting application on port ${PORT}..."
                     nohup npm start -- --port=${PORT} > app.log 2>&1 &
 
@@ -81,7 +84,7 @@ pipeline {
                         fi
                     done
 
-                    # Final check to fail if server never started
+                    # Final health check
                     curl -f http://localhost:${PORT}/health || (echo "Health check failed" && exit 1)
 
                     echo "Application deployed successfully"
