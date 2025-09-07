@@ -69,7 +69,7 @@ pipeline {
                     echo "Starting application on port 3000..."
                     nohup npm start -- --port=3000 > app.log 2>&1 &
                     echo "Waiting for server to start..."
-                    for i in {1..10}; do
+                    for i in {1..15}; do
                         if curl -sf http://localhost:3000/health; then
                             echo "Server is up!"
                             break
