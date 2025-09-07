@@ -65,10 +65,19 @@ pipeline {
             steps {
                 echo 'Deploying to staging environment...'
                 sh '''
-                    pkill -f "node" || true
+                    pkill -f node || true
                     echo "Starting application on port 3000..."
                     nohup npm start -- --port=3000 > app.log 2>&1 &
-                    sleep 5
+                    echo "Waiting for server to start..."
+                    for i in {1..10}; do
+                        if curl -sf http://localhost:3000/health; then
+                            echo "Server is up!"
+                            break
+                        else
+                            echo "Waiting..."
+                            sleep 2
+                        fi
+                    done
                     echo "Application deployed successfully"
                 '''
             }
