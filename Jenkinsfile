@@ -8,7 +8,6 @@ pipeline {
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 echo 'Checking out code from GitHub...'
@@ -67,12 +66,10 @@ pipeline {
             steps {
                 echo 'Deploying to staging environment...'
                 sh '''
-                    # Kill any existing node processes
                     pkill -f node || true
-
                     echo "Starting application on port ${PORT}..."
                     nohup npm start -- --port=${PORT} > app.log 2>&1 &
-
+                    sleep 5
                     echo "Waiting for server to start..."
                     for i in {1..15}; do
                         if curl -sf http://localhost:${PORT}/health; then
@@ -83,10 +80,7 @@ pipeline {
                             sleep 2
                         fi
                     done
-
-                    # Final health check
                     curl -f http://localhost:${PORT}/health || (echo "Health check failed" && exit 1)
-
                     echo "Application deployed successfully"
                 '''
             }
