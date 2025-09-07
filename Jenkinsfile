@@ -69,18 +69,10 @@ pipeline {
                     pkill -f node || true
                     echo "Starting application on port ${PORT}..."
                     nohup npm start -- --port=${PORT} > app.log 2>&1 &
-                    sleep 5
+                    
                     echo "Waiting for server to start..."
-                    for i in {1..15}; do
-                        if curl -sf http://localhost:${PORT}/health; then
-                            echo "Server is up!"
-                            break
-                        else
-                            echo "Waiting..."
-                            sleep 2
-                        fi
-                    done
-                    curl -f http://localhost:${PORT}/health || (echo "Health check failed" && exit 1)
+                    npx wait-on http://localhost:${PORT}/health
+                    
                     echo "Application deployed successfully"
                 '''
             }
