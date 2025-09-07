@@ -1,9 +1,10 @@
 pipeline {
     agent { label 'Slave-1' }
-    
+
     environment {
         NODE_VERSION = '18'
         APP_NAME = 'jenkins-pipeline-test'
+        PORT = '3000'
     }
 
     stages {
@@ -66,11 +67,12 @@ pipeline {
                 echo 'Deploying to staging environment...'
                 sh '''
                     pkill -f node || true
-                    echo "Starting application on port 3000..."
-                    nohup npm start -- --port=3000 > app.log 2>&1 &
+                    echo "Starting application on port ${PORT}..."
+                    nohup npm start -- --port=${PORT} > app.log 2>&1 &
+
                     echo "Waiting for server to start..."
                     for i in {1..15}; do
-                        if curl -sf http://localhost:3000/health; then
+                        if curl -sf http://localhost:${PORT}/health; then
                             echo "Server is up!"
                             break
                         else
@@ -78,6 +80,10 @@ pipeline {
                             sleep 2
                         fi
                     done
+
+                    # Final check to fail if server never started
+                    curl -f http://localhost:${PORT}/health || (echo "Health check failed" && exit 1)
+
                     echo "Application deployed successfully"
                 '''
             }
@@ -87,7 +93,7 @@ pipeline {
             steps {
                 echo 'Performing health check...'
                 sh '''
-                    curl -f http://localhost:3000/health || (echo "Health check failed" && exit 1)
+                    curl -f http://localhost:${PORT}/health || (echo "Health check failed" && exit 1)
                 '''
             }
         }
