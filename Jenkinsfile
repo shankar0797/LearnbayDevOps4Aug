@@ -1,12 +1,11 @@
 pipeline {
     agent { label 'Slave-1' }
-
+    
     environment {
         NODE_VERSION = '18'
         APP_NAME = 'jenkins-pipeline-test'
-        PORT = '3001'
     }
-
+    
     stages {
         stage('Checkout') {
             steps {
@@ -14,31 +13,31 @@ pipeline {
                 checkout scm
             }
         }
-
+        
         stage('Setup Node.js') {
             steps {
                 echo 'Setting up Node.js environment...'
                 sh '''
-                    node --version || nvm install ${NODE_VERSION}
+                    node --version
                     npm --version
                 '''
             }
         }
-
+        
         stage('Install Dependencies') {
             steps {
                 echo 'Installing npm dependencies...'
                 sh 'npm install'
             }
         }
-
+        
         stage('Lint Code') {
             steps {
                 echo 'Running ESLint...'
                 sh 'npm run lint || true'
             }
         }
-
+        
         stage('Run Tests') {
             steps {
                 echo 'Running unit tests...'
@@ -50,44 +49,40 @@ pipeline {
                 }
             }
         }
-
+        
         stage('Build') {
             steps {
                 echo 'Building application...'
                 sh '''
                     echo "Build timestamp: $(date)" > build-info.txt
                     echo "Build number: ${BUILD_NUMBER}" >> build-info.txt
-                    echo "Git commit: $(git rev-parse HEAD)" >> build-info.txt
+                    echo "Git commit: ${GIT_COMMIT}" >> build-info.txt
                 '''
             }
         }
-
+        
         stage('Deploy to Staging') {
             steps {
                 echo 'Deploying to staging environment...'
                 sh '''
-                    pkill -f node || true
-                    echo "Starting application on port ${PORT}..."
-                    nohup npm start -- --port=${PORT} > app.log 2>&1 &
-                    
-                    echo "Waiting for server to start..."
-                    npx wait-on http://localhost:${PORT}/health
-                    
+                    echo "Starting application on port 3001..."
+                    nohup npm start > app.log 2>&1 &
+                    sleep 5
                     echo "Application deployed successfully"
                 '''
             }
         }
-
+        
         stage('Health Check') {
             steps {
                 echo 'Performing health check...'
                 sh '''
-                    curl -f http://localhost:${PORT}/health || (echo "Health check failed" && exit 1)
+                    curl -f http://localhost:3000/health || echo "Health check failed"
                 '''
             }
         }
     }
-
+    
     post {
         always {
             echo 'Pipeline execution completed'
